@@ -1,0 +1,9 @@
+{
+	"name": "AzurePorjectDF",
+	"location": "jioindiawest",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "4dc67a63-0f10-41ca-91c2-399d64669f10",
+		"tenantId": "ed00d800-48b4-4af5-89f2-05e7db72a3f1"
+	}
+}
