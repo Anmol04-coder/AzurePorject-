@@ -105,7 +105,7 @@
 							"container": "bronze",
 							"folder": "users",
 							"file": {
-								"value": "@concat(pipeline().parameters.table,'_',variables('current '))",
+								"value": "@concat(pipeline().parameters.table,variables('current'))",
 								"type": "Expression"
 							}
 						}
@@ -122,7 +122,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "current ",
+					"variableName": "current",
 					"value": {
 						"value": "@utcNow()",
 						"type": "Expression"
@@ -143,6 +143,9 @@
 		},
 		"variables": {
 			"current ": {
+				"type": "String"
+			},
+			"current": {
 				"type": "String"
 			}
 		},
