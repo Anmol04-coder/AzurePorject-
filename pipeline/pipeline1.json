@@ -83,14 +83,6 @@
 				"type": "string"
 			}
 		},
-		"variables": {
-			"current ": {
-				"type": "String"
-			},
-			"current": {
-				"type": "String"
-			}
-		},
 		"annotations": []
 	}
 }
