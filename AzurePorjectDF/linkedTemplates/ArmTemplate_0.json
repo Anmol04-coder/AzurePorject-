@@ -192,9 +192,20 @@
 					{
 						"name": "AzureToDataLake",
 						"type": "Copy",
-						"state": "Inactive",
-						"onInactiveMarkAs": "Succeeded",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "last_cdc",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Set_var",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -207,19 +218,50 @@
 							"source": {
 								"type": "AzureSqlSource",
 								"sqlReaderQuery": {
-									"value": "@select * from @{pipeline().parameters.schema}@{pipeline().parameters.table} where @{pipeline().parameters.cdc_col} > ",
+									"value": "select * from @{pipeline().parameters.schema}@{pipeline().parameters.table} where @{pipeline().parameters.cdc_col} > @{activity('last_cdc').output.value[0].cdc} ",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
 								"partitionOption": "None"
 							},
-							"enableStaging": false
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
 						},
 						"inputs": [
 							{
 								"referenceName": "AzureSqlTable1",
 								"type": "DatasetReference",
 								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Parquet_Dynamic",
+								"type": "DatasetReference",
+								"parameters": {
+									"container": "bronze",
+									"folder": "user",
+									"file": {
+										"value": "@concat(pipeline().parameters.table,'_',variables('current'))",
+										"type": "Expression"
+									}
+								}
 							}
 						]
 					},
@@ -258,6 +300,23 @@
 							},
 							"firstRowOnly": false
 						}
+					},
+					{
+						"name": "Set_var",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "current",
+							"value": {
+								"value": "@utcNow()",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"policy": {
@@ -265,19 +324,19 @@
 				},
 				"parameters": {
 					"schema": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "dbo."
 					},
 					"table": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "DimUser"
 					},
 					"cdc_col": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "updated_at"
 					}
 				},
 				"variables": {
-					"current ": {
-						"type": "String"
-					},
 					"current": {
 						"type": "String"
 					}
@@ -286,6 +345,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/AzureSqlTable1')]",
+				"[concat(variables('factoryId'), '/datasets/Parquet_Dynamic')]",
 				"[concat(variables('factoryId'), '/datasets/Json_Dynamic')]"
 			]
 		}
